@@ -1,13 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// This dynamically picks up your Render URL from Vercel's environment variables
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const userToken = localStorage.getItem('userToken') ? localStorage.getItem('userToken') : null;
 const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
 
 export const login = createAsyncThunk('auth/login', async ({ email, password }, thunkAPI) => {
   try {
     const config = { headers: { 'Content-Type': 'application/json' } };
-    const { data } = await axios.post('http://127.0.0.1:5000/api/auth/login', { email, password }, config);
+    const { data } = await axios.post(`${API_URL}/api/auth/login`, { email, password }, config);
     localStorage.setItem('userInfo', JSON.stringify(data));
     localStorage.setItem('userToken', data.token);
     return data;
@@ -19,7 +22,7 @@ export const login = createAsyncThunk('auth/login', async ({ email, password }, 
 export const register = createAsyncThunk('auth/register', async ({ name, email, password, preferences }, thunkAPI) => {
   try {
     const config = { headers: { 'Content-Type': 'application/json' } };
-    const { data } = await axios.post('http://127.0.0.1:5000/api/auth/register', { name, email, password, preferences }, config);
+    const { data } = await axios.post(`${API_URL}/api/auth/register`, { name, email, password, preferences }, config);
     localStorage.setItem('userInfo', JSON.stringify(data));
     localStorage.setItem('userToken', data.token);
     return data;
@@ -30,9 +33,10 @@ export const register = createAsyncThunk('auth/register', async ({ name, email, 
 
 export const updateProfile = createAsyncThunk('auth/updateProfile', async (profileData, thunkAPI) => {
   try {
-    const { auth: { userToken } } = thunkAPI.getState();
-    const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken}` } };
-    const { data } = await axios.put('http://127.0.0.1:5000/api/auth/profile', profileData, config);
+    const state = thunkAPI.getState();
+    const token = state.auth.userToken;
+    const config = { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } };
+    const { data } = await axios.put(`${API_URL}/api/auth/profile`, profileData, config);
     localStorage.setItem('userInfo', JSON.stringify(data));
     return data;
   } catch (error) {
